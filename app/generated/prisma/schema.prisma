@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Boutique {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  products  Product[]
+  orders    Commande[]
+  livreurs  Livreur[]
+}
+
+model Commande {
+  id         String @id @default(uuid())
+  boutiqueId String
+  adresse    String
+  livreurId  String
+
+  boutique Boutique          @relation(fields: [boutiqueId], references: [id])
+  livreur  Livreur           @relation(fields: [livreurId], references: [id])
+  products CommandeProduct[] // ← relation vers plusieurs produits
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id         String @id @default(uuid())
+  name       String @unique
+  category   String
+  boutiqueId String
+
+  boutique  Boutique          @relation(fields: [boutiqueId], references: [id])
+  commandes CommandeProduct[] // ← relation inverse
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CommandeProduct {
+  id         String @id @default(uuid())
+  commandeId String
+  productId  String
+  quantity   Int    @default(1)
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+}
+
+model Livreur {
+  id         String     @id @default(uuid())
+  name       String
+  deliveries Commande[]
+  boutiqueId String
+  boutique   Boutique   @relation(fields: [boutiqueId], references: [id])
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}

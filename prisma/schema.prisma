@@ -22,6 +22,7 @@ model Boutique {
   products  Product[]
   orders    Commande[]
   livreurs  Livreur[]
+  users     User[]
 }
 
 model Commande {
@@ -59,6 +60,9 @@ model CommandeProduct {
 
   commande Commande @relation(fields: [commandeId], references: [id])
   product  Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Livreur {
@@ -79,6 +83,8 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+  boutiqueId    String
+  boutique     Boutique  @relation(fields: [boutiqueId], references: [id])
 
   @@unique([email])
   @@map("user")
